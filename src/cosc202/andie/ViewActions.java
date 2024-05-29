@@ -1,8 +1,8 @@
 package cosc202.andie;
 
-import java.util.*;
-import java.awt.event.*;
 import javax.swing.*;
+import java.awt.event.*;
+import java.util.*;
 
 /**
  * <p>
@@ -19,39 +19,48 @@ import javax.swing.*;
  * </p>
  * 
  * @author Steven Mills
+ * @author Evan Ting
  * @version 1.0
  */
 public class ViewActions {
     
-    /**
-     * A list of actions for the View menu.
-     */
-    protected ArrayList<Action> actions;
+    /** A list of actions for the View menu. */
+    static ArrayList<Action> actions;
+
+    /** A list of keyboard shortcuts for each action in the View menu. */
+    static ArrayList<KeyStroke> shortcuts;
 
     /**
      * <p>
-     * Create a set of View menu actions.
+     * Create a set of View menu actions, and their corresponding keyboard shortcuts.
      * </p>
      */
     public ViewActions() {
         actions = new ArrayList<Action>();
-        actions.add(new ZoomInAction("Zoom In", null, "Zoom In", Integer.valueOf(KeyEvent.VK_PLUS)));
-        actions.add(new ZoomOutAction("Zoom Out", null, "Zoom Out", Integer.valueOf(KeyEvent.VK_MINUS)));
-        actions.add(new ZoomFullAction("Zoom Full", null, "Zoom Full", Integer.valueOf(KeyEvent.VK_1)));
+        actions.add(new ZoomInAction(Andie.getText("zoomInText"), null, Andie.getText("zoomInText"), Integer.valueOf(KeyEvent.VK_PLUS)));
+        actions.add(new ZoomOutAction(Andie.getText("zoomOutText"), null, Andie.getText("zoomOutText"), Integer.valueOf(KeyEvent.VK_MINUS)));
+        actions.add(new ZoomFullAction(Andie.getText("zoomFullText"), null, Andie.getText("zoomFullText"), Integer.valueOf(KeyEvent.VK_1)));
+
+        shortcuts = new ArrayList<KeyStroke>();
+        shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, ActionEvent.CTRL_MASK));
+        shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK));
+        shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK));
     }
 
     /**
      * <p>
-     * Create a menu containing the list of View actions.
+     * Create a menu containing the list of View actions, and set a keyboard shortcut for each action.
      * </p>
      * 
      * @return The view menu UI element.
      */
     public JMenu createMenu() {
-        JMenu viewMenu = new JMenu("View");
+        JMenu viewMenu = new JMenu(Andie.getText("viewMenuText"));
 
-        for (Action action: actions) {
-            viewMenu.add(new JMenuItem(action));
+        for (int i = 0; i < actions.size(); ++i) {
+            JMenuItem viewMenuItem = new JMenuItem(actions.get(i));
+            viewMenuItem.setAccelerator(shortcuts.get(i));
+            viewMenu.add(viewMenuItem);    
         }
 
         return viewMenu;
@@ -99,7 +108,6 @@ public class ViewActions {
             target.repaint();
             target.getParent().revalidate();
         }
-
     }
 
     /**
@@ -144,7 +152,6 @@ public class ViewActions {
             target.repaint();
             target.getParent().revalidate();
         }
-
     }
 
     /**
@@ -189,9 +196,5 @@ public class ViewActions {
             target.repaint();
             target.getParent().revalidate();
         }
-
     }
-
-
-
 }

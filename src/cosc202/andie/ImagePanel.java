@@ -1,6 +1,7 @@
 package cosc202.andie;
 
 import java.awt.*;
+import java.awt.event.*;
 import javax.swing.*;
 
 /**
@@ -18,9 +19,35 @@ import javax.swing.*;
  * </p>
  * 
  * @author Steven Mills
+ * @author Ari Zuo
+ * @author Evan Ting
  * @version 1.0
  */
 public class ImagePanel extends JPanel {
+     
+    /** The starting point, when the mouse is pressed. */
+    private Point startPoint = new Point(-1, -1); 
+
+    /** The end point, when the mouse has been released. */
+    private Point endPoint = new Point(-1, -1);
+   
+    /**
+     * Return the starting point of a mouse press.
+     * 
+     * @return The starting point of a mouse press
+     */
+    public Point getStartPoint() {
+        return startPoint;
+    }
+
+    /**
+     * Return the end point of a mouse press.
+     * 
+     * @return The end point of a mouse press
+     */
+    public Point getEndPoint() {
+        return endPoint;
+    }
     
     /**
      * The image to display in the ImagePanel.
@@ -51,6 +78,60 @@ public class ImagePanel extends JPanel {
     public ImagePanel() {
         image = new EditableImage();
         scale = 1.0;
+        
+        addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                startPoint = e.getPoint(); 
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                endPoint = e.getPoint(); 
+                repaint();
+
+                int x = (int)Math.max(startPoint.getX(), endPoint.getX()) + 10;
+                int y = (int)Math.max(startPoint.getY(), endPoint.getY()); 
+
+                if ((int)startPoint.getX() != (int)endPoint.getX()
+                    || (int)startPoint.getY() != (int)endPoint.getY()) {
+                    createAndShowPopupMenu(ImageAction.target, x, y); 
+                }
+            }
+        });
+
+        addMouseMotionListener(new MouseAdapter() {
+            public void mouseDragged(MouseEvent e) {
+                endPoint = e.getPoint(); 
+                repaint();
+            }
+        }); 
+    }
+
+    /**
+     * A helper method that displays the popup menu at the specified 
+     * coodinate, on top of the specified ImagePanel.
+     * 
+     * @param target the background panel that the popup menu will be displayed on
+     * @param x the horizontal position of the top left corner of the popup menu
+     * @param y the vertical position of the top let corner of the popup menu
+     */
+    private void createAndShowPopupMenu(ImagePanel target, int x, int y) {
+        JPopupMenu popupMenu = new JPopupMenu();
+    
+        Action cropAction = TransformActions.actions.get(6);
+        cropAction.putValue(Action.NAME, Andie.getText("imageCropText"));
+        Action drawLineAction = DrawActions.actions.get(0);
+        drawLineAction.putValue(Action.NAME, Andie.getText("drawMenuText") + " " + Andie.getText("drawLineText"));
+        Action drawRectAction = DrawActions.actions.get(1);
+        drawRectAction.putValue(Action.NAME, Andie.getText("drawMenuText") + " " + Andie.getText("drawRectText"));
+        Action drawOvalAction = DrawActions.actions.get(2);
+        drawOvalAction.putValue(Action.NAME, Andie.getText("drawMenuText") + " " + Andie.getText("drawOvalText"));
+
+        popupMenu.add(cropAction);
+        popupMenu.add(drawLineAction);
+        popupMenu.add(drawRectAction);
+        popupMenu.add(drawOvalAction);
+
+        popupMenu.show(target, x, y);
     }
 
     /**
@@ -93,12 +174,12 @@ public class ImagePanel extends JPanel {
         if (zoomPercent < 50) {
             zoomPercent = 50;
         }
-        if (zoomPercent > 200) {
+        else if (zoomPercent > 200) {
             zoomPercent = 200;
         }
+
         scale = zoomPercent / 100;
     }
-
 
     /**
      * <p>
@@ -116,7 +197,8 @@ public class ImagePanel extends JPanel {
         if (image.hasImage()) {
             return new Dimension((int) Math.round(image.getCurrentImage().getWidth()*scale), 
                                  (int) Math.round(image.getCurrentImage().getHeight()*scale));
-        } else {
+        } 
+        else {
             return new Dimension(450, 450);
         }
     }
@@ -131,11 +213,29 @@ public class ImagePanel extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        
         if (image.hasImage()) {
-            Graphics2D g2  = (Graphics2D) g.create();
+            Graphics2D g2 = (Graphics2D) g.create();
             g2.scale(scale, scale);
             g2.drawImage(image.getCurrentImage(), null, 0, 0);
             g2.dispose();
         }
+        
+        if (startPoint != null && endPoint != null) {
+            int x = Math.min(startPoint.x, endPoint.x);
+            int y = Math.min(startPoint.y, endPoint.y);
+            int width = Math.abs(startPoint.x - endPoint.x);
+            int height = Math.abs(startPoint.y - endPoint.y);
+            g.drawRect(x, y, width, height);
+        }
+    }
+
+    /**
+     * Clear the current region selection within the panel.
+     */
+    public void clearSelection() {
+        startPoint = new Point(-1, -1);
+        endPoint = new Point(-1, -1);
+        repaint();
     }
 }

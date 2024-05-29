@@ -47,21 +47,6 @@ public class MeanFilter implements ImageOperation, java.io.Serializable {
 
     /**
      * <p>
-     * Construct a Mean filter with the default size.
-     * </p
-     * >
-     * <p>
-     * By default, a Mean filter has radius 1.
-     * </p>
-     * 
-     * @see MeanFilter(int)
-     */
-    MeanFilter() {
-        this(1);
-    }
-
-    /**
-     * <p>
      * Apply a Mean filter to an image.
      * </p>
      * 
@@ -80,12 +65,7 @@ public class MeanFilter implements ImageOperation, java.io.Serializable {
         Arrays.fill(array, 1.0f/size);
 
         Kernel kernel = new Kernel(2*radius+1, 2*radius+1, array);
-        ConvolveOp convOp = new ConvolveOp(kernel);
-        BufferedImage output = new BufferedImage(input.getColorModel(), input.copyData(null), input.isAlphaPremultiplied(), null);
-        convOp.filter(input, output);
-
-        return output;
+        ConvolutionOperation convOp = new ConvolutionOperation(kernel);
+        return convOp.apply(input, false, -1);
     }
-
-
 }

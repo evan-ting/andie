@@ -7,7 +7,7 @@ import java.awt.image.*;
  * ImageOperation to convert an image from colour to greyscale.
  * </p>
  * 
- * <p>
+ * <p> test commit
  * The images produced by this operation are still technically colour images,
  * in that they have red, green, and blue values, but each pixel has equal
  * values for red, green, and blue giving a shade of grey.
@@ -27,9 +27,7 @@ public class ConvertToGrey implements ImageOperation, java.io.Serializable {
      * Create a new CovertToGrey operation.
      * </p>
      */
-    ConvertToGrey() {
-
-    }
+    ConvertToGrey() {}
 
     /**
      * <p>
@@ -43,7 +41,7 @@ public class ConvertToGrey implements ImageOperation, java.io.Serializable {
      * least to blue.
      * </p>
      * 
-     * @param input The image to be converted to greyscale
+     * @param input The image to be converted to greyscale.
      * @return The resulting greyscale image.
      */
     public BufferedImage apply(BufferedImage input) {
@@ -51,7 +49,7 @@ public class ConvertToGrey implements ImageOperation, java.io.Serializable {
         for (int y = 0; y < input.getHeight(); ++y) {
             for (int x = 0; x < input.getWidth(); ++x) {
                 int argb = input.getRGB(x, y);
-                int a = (argb & 0xFF000000) >> 24;
+                int a = (argb & 0xFF000000) >>> 24;
                 int r = (argb & 0x00FF0000) >> 16;
                 int g = (argb & 0x0000FF00) >> 8;
                 int b = (argb & 0x000000FF);
@@ -64,6 +62,5 @@ public class ConvertToGrey implements ImageOperation, java.io.Serializable {
         }
         
         return input;
-    }
-    
+    }   
 }

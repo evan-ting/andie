@@ -4,6 +4,7 @@ import java.util.*;
 import java.io.*;
 import java.awt.image.*;
 import javax.imageio.*;
+import javax.swing.*;
 
 /**
  * <p>
@@ -29,22 +30,35 @@ import javax.imageio.*;
  * </p>
  * 
  * @author Steven Mills
+ * @author Evan Ting
+ * @author Jennifer Puzey
  * @version 1.0
  */
 class EditableImage {
 
     /** The original image. This should never be altered by ANDIE. */
     private BufferedImage original;
+    
     /** The current image, the result of applying {@link ops} to {@link original}. */
     private BufferedImage current;
+    
     /** The sequence of operations currently applied to the image. */
     private Stack<ImageOperation> ops;
+    
     /** A memory of 'undone' operations to support 'redo'. */
     private Stack<ImageOperation> redoOps;
+   
     /** The file where the original image is stored/ */
     private String imageFilename;
+   
     /** The file where the operation sequence is stored. */
     private String opsFilename;
+
+    /** List of actions to be recorded in a unique macro file */
+    private static List<String> actions = new ArrayList<>();
+
+    /** Whether the user is currently recording the macro operations */
+    private static boolean isRecording = false;
 
     /**
      * <p>
@@ -156,7 +170,8 @@ class EditableImage {
             redoOps.clear();
             objIn.close();
             fileIn.close();
-        } catch (Exception ex) {
+        } 
+        catch (Exception ex) {
             // Could be no file or something else. Carry on for now.
             ops.clear();
             redoOps.clear();
@@ -193,7 +208,6 @@ class EditableImage {
         fileOut.close();
     }
 
-
     /**
      * <p>
      * Save an image to a specified file.
@@ -223,8 +237,14 @@ class EditableImage {
      * @param op The operation to apply.
      */
     public void apply(ImageOperation op) {
-        current = op.apply(current);
-        ops.add(op);
+        if (current == null) {
+            JOptionPane.showMessageDialog(ImageAction.target, Andie.getText("noImageToEditWarningText"), Andie.getText("noImageLoadedWarningTitle"), JOptionPane.OK_OPTION);
+        }
+        else {
+            current = op.apply(current);
+            ops.add(op);
+            Andie.frame.setTitle("ANDIE*");
+        }
     }
 
     /**
@@ -271,9 +291,105 @@ class EditableImage {
      */
     private void refresh()  {
         current = deepCopy(original);
+        
         for (ImageOperation op: ops) {
             current = op.apply(current);
         }
     }
 
+    /**
+     * Retrieve the filename of the image.
+     * 
+     * @return A string representing the filename of the image.
+     */
+    public String getImageFilename() {
+        return imageFilename;
+    }
+
+    /**
+     * <p>
+     * Start recording macros by clearing actions list aand toggling isRecording to true.
+     * </p>
+     */
+    public static void startRecording(){
+        actions.clear();
+        isRecording = true;
+    }
+
+    /**
+     * <p>
+     * Stop recording macros by toggling isRecording to false.
+     * </p>
+     */
+    public static void stopRecording(){
+        isRecording = false;
+        
+    }
+
+    /**
+     * <p>
+     * Add an action to the actions list if the user is currently recording macros.
+     * </p>
+     * 
+     * @param action to be recorded
+     */
+    public void addAction(String action){
+        if(isRecording){
+            actions.add(action);
+        }
+    }
+
+    /**
+     * <p>
+     * Save a macro file with the user input name of the file. Automatically save it as a .ops file
+     * regardless of user input.
+     * </p>
+     * 
+     * @param saveFile to be saved
+     */
+    public void saveMacro(File saveFile){
+        if(actions.isEmpty()){
+            return;
+        }
+
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(saveFile))){
+            oos.writeObject(actions);
+        } 
+        catch (IOException e){
+            JOptionPane.showMessageDialog(ImageAction.target, Andie.getText("macroSaveFailedText"), Andie.getText("macroSaveFailedTitle"), JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * <p>
+     * Open a macro file and add the operations from the file to the current image.
+     * </p>
+     * 
+     * @param filePath of the macro file to be opened
+     */
+    public void openMacro(String filePath) throws IOException{
+        try {
+            FileInputStream fileIn = new FileInputStream(filePath);
+            ObjectInputStream objIn = new ObjectInputStream(fileIn);
+            @SuppressWarnings("unchecked")
+            Stack<ImageOperation> opsFromFile = (Stack<ImageOperation>) objIn.readObject();
+            Stack<ImageOperation> temp = new Stack<ImageOperation>();
+
+            while(!opsFromFile.isEmpty()){
+                temp.push(opsFromFile.pop());
+            }
+
+            while(!temp.isEmpty()){
+                ops.push(temp.pop());
+            }
+           
+            objIn.close();
+            fileIn.close();
+        } 
+        catch (Exception ex) {
+            JOptionPane.showMessageDialog(ImageAction.target, Andie.getText("macroImportFailedText"), Andie.getText("macroImportFailedTitle"), JOptionPane.ERROR_MESSAGE);
+        }
+
+        this.refresh();
+    }
 }

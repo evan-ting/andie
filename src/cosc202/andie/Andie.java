@@ -1,8 +1,11 @@
-package cosc202.andie;
+package cosc202.andie; 
 
 import java.awt.*;
-import javax.swing.*;
+import java.util.*;
+import java.util.prefs.*;
 import javax.imageio.*;
+import javax.swing.*;
+
 
 /**
  * <p>
@@ -14,14 +17,55 @@ import javax.imageio.*;
  * It creates a Graphical User Interface (GUI) that provides access to various image editing and processing operations.
  * </p>
  * 
+ * <p> 
+ * While English (from New Zealand) is the default language used by the application, 
+ * users can also choose French (from France) as their preferred language in the GUI.
+ * All French translations in the application are supplied by Google Translate, by
+ * translating the initial english texts supported by the GUI.
+ * All ISO country and language codes used in this application are retrieved from
+ * <a href="https://docs.oracle.com/cd/E13214_01/wli/docs92/xref/xqisocodes.html">this webpage</a> from Oracle.
+ * </p>
+ * 
+ * <p>
+ * The code for setting up keyboard shortcuts were retrieved from <a href="https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html">this tutorial webpage</a> from Oracle.
+ * </p>
+ * 
  * <p>
  * <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>
  * </p>
  * 
  * @author Steven Mills
+ * @author Evan Ting
+ * @author Jennifer Puzey
  * @version 1.0
  */
+
 public class Andie {
+    
+    /** An object used to store and change user preferences. */
+    static Preferences prefs;
+    
+    /** An object used to get the current {@code Locale} object. */
+    static ResourceBundle bundle;
+
+    /** The Frame object containing the ANDIE application. */
+    static JFrame frame;
+
+    /** 
+     * <p>
+     * This is a wrapper method for retrieving the appropriate translation for the current 
+     * locale set by the user.  
+     * It saves a few keystrokes, instead of typing 'Andie.bundle.getString()' every time
+     * in other files.
+     * </p>
+     * 
+     * @param key The 'label' of the value to be retrieved.
+     * @return The value linked to the key as a string, in the language of the locale set 
+     * by the user.
+     */
+    static String getText(String key) {
+        return bundle.getString(key);
+    }
 
     /**
      * <p>
@@ -43,12 +87,15 @@ public class Andie {
      * @see ViewActions
      * @see FilterActions
      * @see ColourActions
+     * @see TransformActions
+     * @see LanguageActions
+     * @see HelpActions
      * 
      * @throws Exception if something goes wrong.
      */
     private static void createAndShowGUI() throws Exception {
         // Set up the main GUI frame
-        JFrame frame = new JFrame("ANDIE");
+        frame = new JFrame("ANDIE");
 
         Image image = ImageIO.read(Andie.class.getClassLoader().getResource("icon.png"));
         frame.setIconImage(image);
@@ -83,6 +130,30 @@ public class Andie {
         ColourActions colourActions = new ColourActions();
         menuBar.add(colourActions.createMenu());
         
+        // Actions that alter the size and orientation of the image
+        TransformActions transformActions = new TransformActions();
+        menuBar.add(transformActions.createMenu());
+
+        // Actions that allows basic shapes to be drawn in the GUI.
+        DrawActions drawActions = new DrawActions();
+        menuBar.add(drawActions.createMenu());
+
+        // Actions to record macros and save them to use on other images
+        MacroActions macroActions = new MacroActions();
+        menuBar.add(macroActions.createMenu());
+
+        // Actions that assist the user
+        HelpActions helpActions = new HelpActions();
+        menuBar.add(helpActions.createMenu());
+
+        // Actions that change the language displayed in the GUI.
+        LanguageActions languageActions = new LanguageActions();
+        menuBar.add(languageActions.createMenu());
+
+        // The Toolbar of common actions displayed in the GUI.
+        Toolbar toolbar = new Toolbar(frame);
+        frame.add(toolbar.getToolBar(), BorderLayout.NORTH);
+
         frame.setJMenuBar(menuBar);
         frame.pack();
         frame.setVisible(true);
@@ -98,6 +169,12 @@ public class Andie {
      * As a result, this is essentially a wrapper around {@code createAndShowGUI()}.
      * </p>
      * 
+     * <p>
+     * As the application supports more than one language within the GUI,
+     * User language preferences are stored and language preference changes 
+     * are applied upon relaunching the application.  
+     * </p>
+     * 
      * @param args Command line arguments, not currently used
      * @throws Exception If something goes awry
      * @see #createAndShowGUI()
@@ -106,8 +183,14 @@ public class Andie {
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 try {
+                    prefs = Preferences.userNodeForPackage(Andie.class);
+                    Locale.setDefault(new Locale(prefs.get("language", "en"), 
+                                                 prefs.get("country", "NZ")));
+                    bundle = ResourceBundle.getBundle("TextBundle");
                     createAndShowGUI();
-                } catch (Exception ex) {
+                } 
+                catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null, Andie.getText("applicationStartupFailedText"), Andie.getText("applicationStartupFailedTitle"), JOptionPane.OK_OPTION);
                     ex.printStackTrace();
                     System.exit(1);
                 }

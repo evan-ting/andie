@@ -53,9 +53,11 @@ public abstract class ImageAction extends AbstractAction {
      */
     ImageAction(String name, ImageIcon icon, String desc, Integer mnemonic) {
         super(name, icon);
+
         if (desc != null) {
            putValue(SHORT_DESCRIPTION, desc);
         }
+        
         if (mnemonic != null) {
             putValue(MNEMONIC_KEY, mnemonic);
         }
@@ -82,5 +84,4 @@ public abstract class ImageAction extends AbstractAction {
     public static ImagePanel getTarget() {
         return target;
     }
-
 }

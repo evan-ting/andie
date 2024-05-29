@@ -1,55 +1,69 @@
 package cosc202.andie;
 
-import java.util.*;
-import java.awt.event.*;
 import javax.swing.*;
+import java.awt.event.*;
+import java.util.*;
 
  /**
- * <p>
- * Actions provided by the Edit menu.
- * </p>
- * 
- * <p>
- * The Edit menu is very common across a wide range of applications.
- * There are a lot of operations that a user might expect to see here.
- * In the sample code there are Undo and Redo actions, but more may need to be added.
- * </p>
- * 
- * <p> 
- * <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>
- * </p>
- * 
- * @author Steven Mills
- * @version 1.0
- */
+  * <p>
+  * Actions provided by the Edit menu.
+  * </p>
+  * 
+  * <p>
+  * The Edit menu is very common across a wide range of applications.
+  * There are a lot of operations that a user might expect to see here.
+  * In the sample code there are Undo and Redo actions, but more may need to be added.
+  * </p>
+  * 
+  * <p> 
+  * <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>
+  * </p>
+  * 
+  * @author Steven Mills
+  * @author Evan Ting
+  * @version 1.0
+  */
 public class EditActions {
     
     /** A list of actions for the Edit menu. */
-    protected ArrayList<Action> actions;
+    static ArrayList<Action> actions;
+
+    /** 
+     * <p>
+     * A list of keyboard shortcuts for each action in the Edit menu.
+     * </p>
+     */
+    static ArrayList<KeyStroke> shortcuts;
 
     /**
      * <p>
-     * Create a set of Edit menu actions.
+     * Create a set of Edit menu actions, and their corresponding keyboard shortcuts.
      * </p>
      */
     public EditActions() {
         actions = new ArrayList<Action>();
-        actions.add(new UndoAction("Undo", null, "Undo", Integer.valueOf(KeyEvent.VK_Z)));
-        actions.add(new RedoAction("Redo", null, "Redo", Integer.valueOf(KeyEvent.VK_Y)));
+        actions.add(new UndoAction(Andie.getText("undoText"), null, Andie.getText("undoText"), Integer.valueOf(KeyEvent.VK_Z)));
+        actions.add(new RedoAction(Andie.getText("redoText"), null, Andie.getText("redoText"), Integer.valueOf(KeyEvent.VK_Y)));
+
+        shortcuts = new ArrayList<KeyStroke>();
+        shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
+        shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_Y, ActionEvent.CTRL_MASK));
     }
 
     /**
      * <p>
-     * Create a menu containing the list of Edit actions.
+     * Create a menu containing the list of Edit actions, and set a keyboard shortcut for each action.
      * </p>
      * 
      * @return The edit menu UI element.
      */
     public JMenu createMenu() {
-        JMenu editMenu = new JMenu("Edit");
+        JMenu editMenu = new JMenu(Andie.getText("editMenuText"));
 
-        for (Action action: actions) {
-            editMenu.add(new JMenuItem(action));
+        for (int i = 0; i < actions.size(); ++i) {
+            JMenuItem editMenuItem = new JMenuItem(actions.get(i));
+            editMenuItem.setAccelerator(shortcuts.get(i));
+            editMenu.add(editMenuItem);    
         }
 
         return editMenu;
@@ -91,9 +105,15 @@ public class EditActions {
          * @param e The event triggering this callback.
          */
         public void actionPerformed(ActionEvent e) {
-            target.getImage().undo();
-            target.repaint();
-            target.getParent().revalidate();
+            try {
+                target.getImage().undo();
+                target.repaint();
+                target.getParent().revalidate();
+                Andie.frame.setTitle("ANDIE*");
+            } 
+            catch (EmptyStackException ex) {
+                JOptionPane.showMessageDialog(target,  Andie.getText("noChangesToUndoWarningText"), Andie.getText("noChangesToUndoWarningTitle"), JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
@@ -120,7 +140,6 @@ public class EditActions {
             super(name, icon, desc, mnemonic);
         }
 
-        
         /**
          * <p>
          * Callback for when the redo action is triggered.
@@ -134,10 +153,15 @@ public class EditActions {
          * @param e The event triggering this callback.
          */
         public void actionPerformed(ActionEvent e) {
-            target.getImage().redo();
-            target.repaint();
-            target.getParent().revalidate();
+            try {
+                target.getImage().redo();
+                target.repaint();
+                target.getParent().revalidate();
+                Andie.frame.setTitle("ANDIE*");
+            } 
+            catch(EmptyStackException ex) {
+                JOptionPane.showMessageDialog(target,  Andie.getText("noChangesToRedoWarningText"), Andie.getText("noChangesToRedoWarningTitle"), JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
-
 }
